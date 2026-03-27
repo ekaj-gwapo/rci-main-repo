@@ -138,20 +138,44 @@ export default function ViewerDashboard() {
     }
   }
 
+  const lastDataStrRef = useRef<string>('')
+
   const fetchTransactions = async (entryUserId: string) => {
     try {
       const response = await fetch(`/api/transactions?userId=${entryUserId}`)
       if (response.ok) {
         const data = await response.json()
-        setAllTransactions(data)
-        extractBankNames(data)
-        extractPlaces(data)
-        applyFilters(data)
+        const dataStr = JSON.stringify(data)
+        
+        // Only update states and trigger re-renders if data actually changed
+        if (dataStr !== lastDataStrRef.current) {
+          lastDataStrRef.current = dataStr
+          setAllTransactions(data)
+          extractBankNames(data)
+          extractPlaces(data)
+          applyFilters(data)
+        }
       }
     } catch (error) {
       console.error('Error fetching transactions:', error)
     }
   }
+
+  const fetchTransactionsRef = useRef(fetchTransactions)
+
+  useEffect(() => {
+    fetchTransactionsRef.current = fetchTransactions
+  }, [fetchTransactions])
+
+  useEffect(() => {
+    if (!selectedEntryUser) return
+
+    const intervalId = setInterval(() => {
+      fetchTransactionsRef.current(selectedEntryUser)
+    }, 5000)
+
+    return () => clearInterval(intervalId)
+  }, [selectedEntryUser])
 
   const extractBankNames = (txs: Transaction[]) => {
     const names = Array.from(new Set(txs.map(tx => tx.bankName).filter(Boolean)))
