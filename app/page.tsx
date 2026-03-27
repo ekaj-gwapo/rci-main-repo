@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowRight, Lock, Eye, FileText, CheckCircle2, UserCircle2, MonitorCheck } from 'lucide-react'
 
-function Confetti() { 
+function Confetti() {
   return (
     <div className="absolute inset-0 z-10 pointer-events-none">
       <div className="confetti-particle bg-red-400" style={{ '--dx': '30px', '--dy': '-40px' } as any}></div>
@@ -41,7 +41,7 @@ export default function Home() {
           {/* LEFT SIDE */}
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
-              T
+              RCI
             </div>
 
             <span className="text-2xl md:text-3xl font-semibold text-emerald-900 tracking-tight">
