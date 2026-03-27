@@ -32,6 +32,19 @@ import { LogOut, ChevronDown, Settings, Printer, Archive, Search, Upload } from 
 import Link from 'next/link'
 import * as xlsx from 'xlsx'
 
+function HeartConfetti() {
+  return (
+    <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
+      <div className="confetti-particle absolute text-red-500 text-[10px]" style={{ '--dx': '20px', '--dy': '-30px' } as any}>❤️</div>
+      <div className="confetti-particle absolute text-pink-500 text-[10px]" style={{ '--dx': '-25px', '--dy': '-15px' } as any}>💖</div>
+      <div className="confetti-particle absolute text-red-500 text-[10px]" style={{ '--dx': '15px', '--dy': '25px' } as any}>❤️</div>
+      <div className="confetti-particle absolute text-pink-500 text-[10px]" style={{ '--dx': '-15px', '--dy': '20px' } as any}>💖</div>
+      <div className="confetti-particle absolute text-red-500 text-[10px]" style={{ '--dx': '10px', '--dy': '-35px' } as any}>❤️</div>
+      <div className="confetti-particle absolute text-pink-500 text-[10px]" style={{ '--dx': '-10px', '--dy': '30px' } as any}>💖</div>
+    </div>
+  )
+}
+
 type Transaction = {
   id: string
   bankName: string
@@ -164,32 +177,32 @@ export default function ViewerDashboard() {
       const workbook = xlsx.read(data)
       const worksheet = workbook.Sheets[workbook.SheetNames[0]]
       const jsonData = xlsx.utils.sheet_to_json<any>(worksheet, { raw: false, dateNF: 'mm/dd/yyyy' })
-      
+
       const mappedTransactions = jsonData.map((rawRow, index) => {
         // Normalize keys to lowercase, trimming and replacing ANY whitespace (like newlines) with single space
         const row: Record<string, any> = {}
         for (const [key, value] of Object.entries(rawRow)) {
-           const cleanKey = key.toString().toLowerCase().replace(/[\s\r\n]+/g, ' ').trim()
-           row[cleanKey] = value
+          const cleanKey = key.toString().toLowerCase().replace(/[\s\r\n]+/g, ' ').trim()
+          row[cleanKey] = value
         }
 
         // Handle different date formats (Excel serial dates vs strings)
         let formattedDate = ''
         const rawDate = row['date']
-        
+
         if (rawDate) {
-           formattedDate = rawDate.toString().trim()
+          formattedDate = rawDate.toString().trim()
         }
 
         const parseAmount = (val: any) => {
-           if (typeof val === 'number') return val;
-           if (!val) return 0;
-           return parseFloat(val.toString().replace(/,/g, '')) || 0;
+          if (typeof val === 'number') return val;
+          if (!val) return 0;
+          return parseFloat(val.toString().replace(/,/g, '')) || 0;
         }
 
         const getString = (val: any) => {
-           if (val === null || val === undefined) return '';
-           return val.toString().trim();
+          if (val === null || val === undefined) return '';
+          return val.toString().trim();
         }
 
         return {
@@ -213,9 +226,9 @@ export default function ViewerDashboard() {
           moph: getString(row['moph'] || row['location'] || row['place'])
         }
       })
-      
+
       const validTransactions = mappedTransactions.filter(tx => {
-         return !!tx.bankName && !!tx.payee && !!tx.particulars && tx.amount > 0 && !!tx.accountCode;
+        return !!tx.bankName && !!tx.payee && !!tx.particulars && tx.amount > 0 && !!tx.accountCode;
       });
 
       if (validTransactions.length === 0 && mappedTransactions.length > 0) {
@@ -229,7 +242,7 @@ export default function ViewerDashboard() {
         if (!firstFail.particulars) missing.push("Particulars");
         if (firstFail.amount <= 0) missing.push("Amount (>0)");
         if (!firstFail.accountCode) missing.push("Account Code");
-        
+
         toast.error(`Invalid Excel data. Missing/invalid fields: ${missing.join(', ')}. Please check the console.`);
         setIsImporting(false)
         if (fileInputRef.current) fileInputRef.current.value = ''
@@ -247,10 +260,10 @@ export default function ViewerDashboard() {
       const finalTransactions = validTransactions.map(({ _rawIndex, _rawRow, ...tx }) => tx);
 
       if (!selectedEntryUser) {
-         toast.error("No entry user selected to assign imports to.");
-         setIsImporting(false)
-         if (fileInputRef.current) fileInputRef.current.value = ''
-         return
+        toast.error("No entry user selected to assign imports to.");
+        setIsImporting(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+        return
       }
 
       const response = await fetch('/api/transactions/bulk', {
@@ -263,15 +276,15 @@ export default function ViewerDashboard() {
       })
 
       if (!response.ok) {
-         throw new Error('Failed to import transactions')
+        throw new Error('Failed to import transactions')
       }
-      
+
       const result = await response.json()
       toast.success(result.message || `Successfully imported ${finalTransactions.length} transactions!`)
-      
+
       // Refresh transactions
       await fetchTransactions(selectedEntryUser)
-      
+
     } catch (error) {
       console.error('Error importing Excel:', error)
       toast.error('Failed to import file. Make sure it is a valid Excel file with the correct headers.')
@@ -304,8 +317,8 @@ export default function ViewerDashboard() {
       const filterDate = new Date(selectedDate)
       filtered = filtered.filter(tx => {
         const txDate = new Date(tx.date)
-        return txDate.getMonth() === filterDate.getMonth() && 
-               txDate.getFullYear() === filterDate.getFullYear()
+        return txDate.getMonth() === filterDate.getMonth() &&
+          txDate.getFullYear() === filterDate.getFullYear()
       })
     }
 
@@ -373,7 +386,7 @@ export default function ViewerDashboard() {
 
       const batch = await batchResponse.json()
       setBatchId(batch.id)
-      
+
       // Store batch info for confirmation
       setPendingBatch(batch)
 
@@ -434,7 +447,19 @@ export default function ViewerDashboard() {
       <div className="bg-white border-b border-emerald-100 sticky top-0 z-40 print:hidden">
         <div className="w-full px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <img src="/logos/logo3.jpg" alt="Logo" className="h-10 w-10 object-contain" />
+            <div className="group w-16 h-16 [perspective:1000px] cursor-pointer shrink-0">
+              <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-sm hover:shadow-md rounded-full hover:-translate-y-0.5">
+                <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white flex items-center justify-center">
+                  <img src="/logos/logo3.jpg" alt="Logo" className="object-contain w-full h-full p-1" />
+                </div>
+                <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white">
+                  <HeartConfetti />
+                  <div className="w-full h-full rounded-full overflow-hidden border-2 border-emerald-100">
+                    <img src="/logos/logo-back5.jpg" alt="Logo Back" className="object-cover w-full h-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
             <div>
               <h1 className="text-2xl font-bold text-emerald-900">Viewer Dashboard</h1>
               <p className="text-sm text-gray-600">{user?.email}</p>
@@ -460,24 +485,24 @@ export default function ViewerDashboard() {
         {/* Filters and Actions */}
         <div className="bg-white rounded-xl p-6 mb-8 border border-emerald-100 shadow-md">
           <div className="flex justify-between items-center mb-4">
-             <div className="flex gap-2">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  accept=".xlsx, .xls, .csv" 
-                  style={{ display: 'none' }} 
-                  onChange={handleFileUpload}
-                />
-                <Button 
-                   onClick={() => fileInputRef.current?.click()}
-                   variant="outline"
-                   className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
-                   disabled={isImporting || !selectedEntryUser}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {isImporting ? 'Importing...' : 'Import Excel'}
-                </Button>
-             </div>
+            <div className="flex gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".xlsx, .xls, .csv"
+                style={{ display: 'none' }}
+                onChange={handleFileUpload}
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                disabled={isImporting || !selectedEntryUser}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {isImporting ? 'Importing...' : 'Import Excel'}
+              </Button>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
@@ -490,7 +515,7 @@ export default function ViewerDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none" className="text-gray-500 italic">All Bank Names</SelectItem>
-                  
+
                   {(bankNames.includes('Landbank - 43') || bankNames.includes('Landbank - 45')) && (
                     <SelectGroup>
                       <SelectLabel className="font-bold text-emerald-800">Landbank of the Philippines</SelectLabel>
@@ -498,11 +523,11 @@ export default function ViewerDashboard() {
                       {bankNames.includes('Landbank - 45') && <SelectItem value="Landbank - 45" className="pl-6">Landbank - 45</SelectItem>}
                     </SelectGroup>
                   )}
-                  
+
                   {bankNames.some(b => b === 'Landbank - 43' || b === 'Landbank - 45') && bankNames.some(b => b !== 'Landbank - 43' && b !== 'Landbank - 45') && (
                     <div className="h-px bg-emerald-100 my-1 mx-2"></div>
                   )}
-                  
+
                   {bankNames.some(b => b !== 'Landbank - 43' && b !== 'Landbank - 45') && (
                     <SelectGroup>
                       {bankNames.filter(name => name !== 'Landbank - 43' && name !== 'Landbank - 45').map(name => (
@@ -531,9 +556,9 @@ export default function ViewerDashboard() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fund
               </label>
-              <Select 
+              <Select
                 disabled={selectedPlace !== '' && selectedPlace !== 'none'}
-                value={selectedFund} 
+                value={selectedFund}
                 onValueChange={setSelectedFund}
               >
                 <SelectTrigger className="w-full bg-white border-emerald-200 focus:ring-emerald-600">
@@ -553,9 +578,9 @@ export default function ViewerDashboard() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 MOPH
               </label>
-              <Select 
+              <Select
                 disabled={selectedFund !== '' && selectedFund !== 'none'}
-                value={selectedPlace} 
+                value={selectedPlace}
                 onValueChange={setSelectedPlace}
               >
                 <SelectTrigger className="w-full bg-white border-emerald-200 focus:ring-emerald-600">
@@ -594,7 +619,7 @@ export default function ViewerDashboard() {
         <div>
           <div className="flex justify-between items-center mb-4 gap-4">
             <h2 className="text-2xl font-bold text-gray-900">Transactions</h2>
-            
+
             <div className="flex items-center gap-3">
               {/* Search Bar (Repositioned) */}
               <div className="relative w-72">
@@ -652,18 +677,18 @@ export default function ViewerDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Did the report print successfully?</AlertDialogTitle>
             <AlertDialogDescription>
-              If the print was successful, clicking Confirm will finalize the batch. 
+              If the print was successful, clicking Confirm will finalize the batch.
               Clicking Undo will restore the transactions for re-printing.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => confirmBatch(true)}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               Print Successful (Confirm)
             </AlertDialogAction>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => confirmBatch(false)}
               className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 mt-0"
             >

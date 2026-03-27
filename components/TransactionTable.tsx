@@ -208,7 +208,7 @@ export default function TransactionTable({ transactions, onTransactionDeleted, o
         <div className="overflow-auto min-h-[450px] max-h-[600px] pb-[200px]">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-emerald-100 bg-emerald-100 sticky top-0">
+              <tr className="border-b-2 border-emerald-600 bg-emerald-100 sticky top-0 z-10">
                 <SortableHeader label="Date" field="date" />
                 <SortableHeader label="Check No." field="checkNumber" />
                 <SortableHeader label="DV #" field="dvNumber" />
@@ -319,8 +319,15 @@ export default function TransactionTable({ transactions, onTransactionDeleted, o
                                 handleEditChange('bankName', '')
                               } else {
                                 handleEditChange('bankName', val === 'custom_prefill' ? editFormData.bankName : val)
-                                if (val === 'Landbank - 43' && !(editFormData as any).checkNumber) handleEditChange('checkNumber' as any, '43')
-                                if (val === 'Landbank - 45' && !(editFormData as any).checkNumber) handleEditChange('checkNumber' as any, '45')
+                                const currentCheck = (editFormData as any).checkNumber || ''
+                                if (val === 'Landbank - 43') {
+                                  if (!currentCheck) handleEditChange('checkNumber' as any, '43')
+                                  else if (currentCheck.startsWith('45')) handleEditChange('checkNumber' as any, '43' + currentCheck.slice(2))
+                                }
+                                if (val === 'Landbank - 45') {
+                                  if (!currentCheck) handleEditChange('checkNumber' as any, '45')
+                                  else if (currentCheck.startsWith('43')) handleEditChange('checkNumber' as any, '45' + currentCheck.slice(2))
+                                }
                               }
                             }}
                           >

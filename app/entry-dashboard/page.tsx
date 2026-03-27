@@ -29,6 +29,19 @@ import { MonthYearPicker } from '@/components/MonthYearPicker'
 import { LogOut, Plus, Search } from 'lucide-react'
 import Link from 'next/link'
 
+function HeartConfetti() { 
+  return (
+    <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
+      <div className="confetti-particle absolute text-red-500 text-[10px]" style={{ '--dx': '20px', '--dy': '-30px' } as any}>❤️</div>
+      <div className="confetti-particle absolute text-pink-500 text-[10px]" style={{ '--dx': '-25px', '--dy': '-15px' } as any}>💖</div>
+      <div className="confetti-particle absolute text-red-500 text-[10px]" style={{ '--dx': '15px', '--dy': '25px' } as any}>❤️</div>
+      <div className="confetti-particle absolute text-pink-500 text-[10px]" style={{ '--dx': '-15px', '--dy': '20px' } as any}>💖</div>
+      <div className="confetti-particle absolute text-red-500 text-[10px]" style={{ '--dx': '10px', '--dy': '-35px' } as any}>❤️</div>
+      <div className="confetti-particle absolute text-pink-500 text-[10px]" style={{ '--dx': '-10px', '--dy': '30px' } as any}>💖</div>
+    </div>
+  )
+}
+
 type Transaction = {
   id: string
   bankName: string
@@ -191,9 +204,21 @@ export default function EntryDashboard() {
       <div className="bg-white border-b border-emerald-100 sticky top-0 z-40">
         <div className="w-full px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            {logo && (
-              <img src={logo} alt="Logo" className="h-10 w-10 object-contain" />
-            )}
+            {logo ? (
+              <div className="group w-16 h-16 [perspective:1000px] cursor-pointer shrink-0">
+                <div className="relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] shadow-sm hover:shadow-md rounded-full hover:-translate-y-0.5">
+                  <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [backface-visibility:hidden] bg-white flex items-center justify-center">
+                    <img src={logo} alt="Logo" className="object-contain w-full h-full p-1" />
+                  </div>
+                  <div className="absolute inset-0 w-full h-full rounded-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white">
+                    <HeartConfetti />
+                    <div className="w-full h-full rounded-full overflow-hidden border-2 border-emerald-100">
+                      <img src="/logos/logo-back5.jpg" alt="Logo Back" className="object-cover w-full h-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <div>
               <h1 className="text-2xl font-bold text-emerald-900">Data Entry</h1>
               <p className="text-sm text-gray-600">{user?.email}</p>

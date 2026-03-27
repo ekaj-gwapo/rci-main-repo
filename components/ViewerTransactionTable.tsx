@@ -108,7 +108,7 @@ export default function ViewerTransactionTable({
       <div className="overflow-auto min-h-[450px] max-h-[600px] pb-[200px]">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-emerald-100 bg-emerald-100 sticky top-0">
+            <tr className="border-b-2 border-emerald-600 bg-emerald-100 sticky top-0 z-10">
               <SortableHeader label="Date" field="date" />
               <SortableHeader label="Check No." field="checkNumber" />
               <SortableHeader label="DV #" field="dvNumber" />

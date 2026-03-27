@@ -177,8 +177,14 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
                 } else {
                   setFormData(prev => {
                     const updates = { ...prev, bank_name: val }
-                    if (val === 'Landbank - 43' && !prev.check_number) updates.check_number = '43'
-                    if (val === 'Landbank - 45' && !prev.check_number) updates.check_number = '45'
+                    if (val === 'Landbank - 43') {
+                      if (!prev.check_number) updates.check_number = '43'
+                      else if (prev.check_number.startsWith('45')) updates.check_number = '43' + prev.check_number.slice(2)
+                    }
+                    if (val === 'Landbank - 45') {
+                      if (!prev.check_number) updates.check_number = '45'
+                      else if (prev.check_number.startsWith('43')) updates.check_number = '45' + prev.check_number.slice(2)
+                    }
                     return updates
                   })
                 }
@@ -414,7 +420,7 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4 border-t border-slate-100">
+      <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
         <Button
           type="submit"
           disabled={isLoading}

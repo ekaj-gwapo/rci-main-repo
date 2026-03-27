@@ -38,6 +38,25 @@ export default function LoginPage() {
 
   const router = useRouter()
 
+  useEffect(() => {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        if (user.role === 'entry_user') {
+          router.replace('/entry-dashboard')
+        } else if (user.role === 'viewer_user') {
+          router.replace('/viewer-dashboard')
+        } else {
+          router.replace('/')
+        }
+      } catch (e) {
+        // Invalid or corrupted user data
+        localStorage.removeItem('user')
+      }
+    }
+  }, [router])
+
   const handleTitleClick = () => {
     if (!isEggRevealed && !isEggBroken) {
       setIsEggRevealed(true)
@@ -92,11 +111,11 @@ export default function LoginPage() {
 
       // Redirect based on role
       if (user.role === 'entry_user') {
-        router.push('/entry-dashboard')
+        router.replace('/entry-dashboard')
       } else if (user.role === 'viewer_user') {
-        router.push('/viewer-dashboard')
+        router.replace('/viewer-dashboard')
       } else {
-        router.push('/')
+        router.replace('/')
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
