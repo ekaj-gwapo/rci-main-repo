@@ -27,11 +27,12 @@ type Batch = {
 }
 
 interface BatchListProps {
-  viewerId: string
+  viewerId?: string
+  entryUserId?: string
   onSelectBatch: (batch: Batch) => void
 }
 
-export default function BatchList({ viewerId, onSelectBatch }: BatchListProps) {
+export default function BatchList({ viewerId, entryUserId, onSelectBatch }: BatchListProps) {
   const [batches, setBatches] = useState<Batch[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -47,7 +48,8 @@ export default function BatchList({ viewerId, onSelectBatch }: BatchListProps) {
     const fetchBatches = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/batches?viewerId=${viewerId}`)
+        const queryParam = viewerId ? `viewerId=${viewerId}` : `entryUserId=${entryUserId}`
+        const response = await fetch(`/api/batches?${queryParam}`)
         if (!response.ok) throw new Error('Failed to fetch batches')
         const data = await response.json()
         
@@ -136,7 +138,7 @@ export default function BatchList({ viewerId, onSelectBatch }: BatchListProps) {
     }
 
     fetchBatches()
-  }, [viewerId])
+  }, [viewerId, entryUserId])
 
   const formatCurrency = (amount: number) => {
     const formatted = amount.toLocaleString('en-US', {

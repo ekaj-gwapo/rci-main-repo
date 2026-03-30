@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,7 +26,7 @@ import {
 import TransactionForm from '@/components/TransactionForm'
 import TransactionTable from '@/components/TransactionTable'
 import { MonthYearPicker } from '@/components/MonthYearPicker'
-import { LogOut, Plus, Search } from 'lucide-react'
+import { LogOut, Plus, Search, Archive } from 'lucide-react'
 import Link from 'next/link'
 
 function HeartConfetti() { 
@@ -108,20 +108,43 @@ export default function EntryDashboard() {
     checkAuth()
   }, [router])
 
+  const lastDataStrRef = useRef<string>('')
+
   const fetchTransactions = async (userId: string) => {
     try {
       const response = await fetch(`/api/transactions?userId=${userId}`)
       if (response.ok) {
         const data = await response.json()
-        setAllTransactions(data)
-        setTransactions(data)
-        extractBankNames(data)
-        extractPlaces(data)
+        const dataStr = JSON.stringify(data)
+        
+        if (dataStr !== lastDataStrRef.current) {
+          lastDataStrRef.current = dataStr
+          setAllTransactions(data)
+          extractBankNames(data)
+          extractPlaces(data)
+          applyFilters(data)
+        }
       }
     } catch (error) {
       console.error('Error fetching transactions:', error)
     }
   }
+
+  const fetchTransactionsRef = useRef(fetchTransactions)
+
+  useEffect(() => {
+    fetchTransactionsRef.current = fetchTransactions
+  }, [fetchTransactions])
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const intervalId = setInterval(() => {
+      fetchTransactionsRef.current(user.id)
+    }, 5000)
+
+    return () => clearInterval(intervalId)
+  }, [user?.id])
 
   const extractBankNames = (txs: Transaction[]) => {
     const names = Array.from(new Set(txs.map(tx => tx.bankName).filter(Boolean)))
@@ -137,8 +160,8 @@ export default function EntryDashboard() {
     setPlaces(placeList.sort())
   }
 
-  const applyFilters = () => {
-    let filtered = [...allTransactions]
+  const applyFilters = (data: Transaction[] = allTransactions) => {
+    let filtered = [...data]
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
@@ -178,7 +201,7 @@ export default function EntryDashboard() {
 
   useEffect(() => {
     if (allTransactions.length > 0) {
-      applyFilters()
+      applyFilters(allTransactions)
     }
   }, [selectedBankName, selectedDate, selectedFund, selectedPlace, searchQuery, allTransactions])
 
@@ -363,32 +386,42 @@ export default function EntryDashboard() {
               />
             </div>
 
-            <Dialog open={showForm} onOpenChange={setShowForm}>
-              <DialogTrigger asChild>
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 h-10 font-bold"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Transaction
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>New Transaction</DialogTitle>
-                  <DialogDescription>Enter transaction details below. All fields marked with * are required.</DialogDescription>
-                </DialogHeader>
-                <div className="mt-4">
-                  <TransactionForm
-                    userId={user?.id}
-                    existingBankNames={bankNames}
-                    onSuccess={() => {
-                      if (user?.id) fetchTransactions(user.id)
-                      setShowForm(false)
-                    }}
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => router.push('/entry-batch-management')}
+                variant="outline"
+                className="border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 h-10"
+              >
+                <Archive className="w-4 h-4 mr-2" />
+                View Batches
+              </Button>
+              <Dialog open={showForm} onOpenChange={setShowForm}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 h-10 font-bold"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Transaction
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>New Transaction</DialogTitle>
+                    <DialogDescription>Enter transaction details below. All fields marked with * are required.</DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    <TransactionForm
+                      userId={user?.id}
+                      existingBankNames={bankNames}
+                      onSuccess={() => {
+                        if (user?.id) fetchTransactions(user.id)
+                        setShowForm(false)
+                      }}
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
 

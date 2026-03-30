@@ -39,12 +39,14 @@ interface BatchDetailsProps {
   batch: Batch
   onBack: () => void
   onRestoreSuccess: () => void
+  readonly?: boolean
 }
 
 export default function BatchDetails({
   batch,
   onBack,
   onRestoreSuccess,
+  readonly = false,
 }: BatchDetailsProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -214,50 +216,52 @@ export default function BatchDetails({
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex gap-2">
-        <Button
-          onClick={handleSelectAll}
-          variant="outline"
-          className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
-          size="sm"
-        >
-          <Check className="w-4 h-4 mr-2" />
-          {selectedTransactions.size === transactions.length ? 'Deselect All' : 'Select All'}
-        </Button>
-        {totalSelected > 0 && (
-          <>
-            {!restoreConfirm ? (
-              <Button
-                onClick={() => setRestoreConfirm(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                size="sm"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Restore {totalSelected} Transaction{totalSelected !== 1 ? 's' : ''}
-              </Button>
-            ) : (
-              <>
+      {!readonly && (
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSelectAll}
+            variant="outline"
+            className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+            size="sm"
+          >
+            <Check className="w-4 h-4 mr-2" />
+            {selectedTransactions.size === transactions.length ? 'Deselect All' : 'Select All'}
+          </Button>
+          {totalSelected > 0 && (
+            <>
+              {!restoreConfirm ? (
                 <Button
-                  onClick={handleRestore}
-                  disabled={isRestoring}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => setRestoreConfirm(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   size="sm"
                 >
-                  {isRestoring ? 'Restoring...' : 'Confirm Restore'}
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Restore {totalSelected} Transaction{totalSelected !== 1 ? 's' : ''}
                 </Button>
-                <Button
-                  onClick={() => setRestoreConfirm(false)}
-                  variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50"
-                  size="sm"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-          </>
-        )}
-      </div>
+              ) : (
+                <>
+                  <Button
+                    onClick={handleRestore}
+                    disabled={isRestoring}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    {isRestoring ? 'Restoring...' : 'Confirm Restore'}
+                  </Button>
+                  <Button
+                    onClick={() => setRestoreConfirm(false)}
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50"
+                    size="sm"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Transactions Table */}
       <Card className="border-emerald-100">
@@ -266,14 +270,16 @@ export default function BatchDetails({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-emerald-100 bg-emerald-50">
-                  <th className="px-4 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedTransactions.size === transactions.length && transactions.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-emerald-300 text-emerald-600"
-                    />
-                  </th>
+                  {!readonly && (
+                    <th className="px-4 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        checked={selectedTransactions.size === transactions.length && transactions.length > 0}
+                        onChange={handleSelectAll}
+                        className="rounded border-emerald-300 text-emerald-600"
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 text-left font-semibold text-emerald-900">
                     Date
                   </th>
@@ -308,14 +314,16 @@ export default function BatchDetails({
                       idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'
                     }`}
                   >
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedTransactions.has(tx.batchTransactionId)}
-                        onChange={() => handleSelectTransaction(tx.batchTransactionId)}
-                        className="rounded border-emerald-300 text-emerald-600"
-                      />
-                    </td>
+                    {!readonly && (
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedTransactions.has(tx.batchTransactionId)}
+                          onChange={() => handleSelectTransaction(tx.batchTransactionId)}
+                          className="rounded border-emerald-300 text-emerald-600"
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-gray-900 font-medium">
                       {formatDate(tx.date)}
                     </td>

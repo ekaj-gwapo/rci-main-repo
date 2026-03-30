@@ -13,19 +13,20 @@ const mapBatch = (b: any) => ({
   createdAt: b.createdat
 })
 
-// GET all batches for a viewer
+// GET all batches for a viewer or entry user
 export async function GET(request: NextRequest) {
   try {
     const viewerId = request.nextUrl.searchParams.get('viewerId')
+    const entryUserId = request.nextUrl.searchParams.get('entryUserId')
 
-    if (!viewerId) {
+    if (!viewerId && !entryUserId) {
       return NextResponse.json(
-        { error: 'Viewer ID required' },
+        { error: 'Viewer ID or Entry User ID required' },
         { status: 400 }
       )
     }
 
-    const { data: batches, error } = await supabase
+    let query = supabase
       .from('transaction_batches')
       .select(`
         *,
@@ -33,8 +34,15 @@ export async function GET(request: NextRequest) {
           transactiondata
         )
       `)
-      .eq('viewerid', viewerId)
       .order('createdat', { ascending: false })
+
+    if (viewerId) {
+      query = query.eq('viewerid', viewerId)
+    } else if (entryUserId) {
+      query = query.eq('entryuserid', entryUserId)
+    }
+
+    const { data: batches, error } = await query
 
     if (error) throw error
 
