@@ -714,7 +714,7 @@ export default function ViewerDashboard() {
             </AlertDialogAction>
             <AlertDialogCancel
               onClick={() => confirmBatch(false)}
-              className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 mt-0"
+              className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:text-red-700 mt-0"
             >
               Print Failed (Undo)
             </AlertDialogCancel>

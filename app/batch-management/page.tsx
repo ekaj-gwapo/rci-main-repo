@@ -83,14 +83,14 @@ export default function BatchManagement() {
             <Button
               onClick={() => router.push('/viewer-dashboard')}
               variant="outline"
-              className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+              className="border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
             >
               Back to Dashboard
             </Button>
             <Button
               onClick={handleLogout}
               variant="outline"
-              className="text-red-600 border-red-300 hover:bg-red-50"
+              className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout

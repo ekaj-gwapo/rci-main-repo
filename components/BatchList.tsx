@@ -283,7 +283,7 @@ export default function BatchList({ viewerId, entryUserId, onSelectBatch }: Batc
               }}
               variant="ghost"
               size="sm"
-              className="text-emerald-600 hover:bg-emerald-50"
+              className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
             >
               <X className="w-4 h-4 mr-1" />
               Clear

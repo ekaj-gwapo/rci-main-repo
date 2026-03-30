@@ -173,7 +173,7 @@ export default function BatchDetails({
             onClick={onBack}
             variant="ghost"
             size="sm"
-            className="text-emerald-600 hover:bg-emerald-50"
+            className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Batches
@@ -221,7 +221,7 @@ export default function BatchDetails({
           <Button
             onClick={handleSelectAll}
             variant="outline"
-            className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+            className="border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
             size="sm"
           >
             <Check className="w-4 h-4 mr-2" />
@@ -251,7 +251,7 @@ export default function BatchDetails({
                   <Button
                     onClick={() => setRestoreConfirm(false)}
                     variant="outline"
-                    className="border-red-300 text-red-600 hover:bg-red-50"
+                    className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
                     size="sm"
                   >
                     <X className="w-4 h-4" />
