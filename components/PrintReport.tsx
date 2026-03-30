@@ -45,6 +45,10 @@ const displayBankName = actualBankName === 'Landbank - 43' || actualBankName ===
   ? 'LAND BANK OF THE PHILIPPINES' 
   : actualBankName;
 
+const derivedMoph = moph || (transactions.length === 1 ? transactions[0].moph : undefined);
+const derivedFund = fund || (transactions.length === 1 ? transactions[0].fund : undefined);
+const displayFund = derivedMoph ? `MOPH - ${derivedMoph}` : (derivedFund || "GENERAL FUND");
+
 return (
 
 <div ref={ref} className="w-full bg-white p-8 font-serif text-[12px]">
@@ -89,7 +93,7 @@ return (
   </div>
   <div className="text-right mb-1">
     <p>Fund: <span className="font-bold uppercase border-b border-black inline-block min-w-[150px] text-center">
-      {moph ? `MOPH - ${moph}` : (fund || "GENERAL FUND")}
+      {displayFund}
     </span></p>
   </div>
 </div>
