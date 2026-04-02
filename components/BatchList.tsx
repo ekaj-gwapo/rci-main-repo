@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Archive, ChevronRight, X } from 'lucide-react'
+import { Archive, ChevronRight, X, Printer } from 'lucide-react'
 
 type Batch = {
   id: string
@@ -29,9 +29,10 @@ type Batch = {
 interface BatchListProps {
   viewerId: string
   onSelectBatch: (batch: Batch) => void
+  onPrintBatch: (batch: Batch) => void
 }
 
-export default function BatchList({ viewerId, onSelectBatch }: BatchListProps) {
+export default function BatchList({ viewerId, onSelectBatch, onPrintBatch }: BatchListProps) {
   const [batches, setBatches] = useState<Batch[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -310,7 +311,20 @@ export default function BatchList({ viewerId, onSelectBatch }: BatchListProps) {
                   <CardTitle className="text-xl font-bold text-emerald-900">
                     {batch.batchName}
                   </CardTitle>
-                  <ChevronRight className="w-5 h-5 text-emerald-400 mt-1" />
+                  <div className="flex gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-emerald-600 hover:bg-emerald-50"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onPrintBatch(batch)
+                      }}
+                    >
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                    <ChevronRight className="w-5 h-5 text-emerald-400 mt-1.5" />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

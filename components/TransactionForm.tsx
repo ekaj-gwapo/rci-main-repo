@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,6 +27,7 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isCustomBank, setIsCustomBank] = useState(false)
+  const [batches, setBatches] = useState<any[]>([])
   const [formData, setFormData] = useState({
     bank_name: '',
     payee: '',
@@ -44,6 +45,7 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
     fund: '',
     moph_location: '',
     responsibility_center: '',
+    batch_id: '',
   })
 
   const standardBanks = [
@@ -75,6 +77,22 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
     'Magsaysay',
     'Alubijid',
   ]
+
+  useEffect(() => {
+    const fetchBatches = async () => {
+      if (!userId) return
+      try {
+        const response = await fetch(`/api/batches?entryUserId=${userId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setBatches(data)
+        }
+      } catch (error) {
+        console.error('Error fetching batches:', error)
+      }
+    }
+    fetchBatches()
+  }, [userId])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -112,6 +130,7 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
         fund: formData.fund,
         moph: formData.moph_location,
         responsibilityCenter: formData.responsibility_center,
+        batchId: formData.batch_id || undefined,
       })
 
       const response = await fetch(`/api/transactions?userId=${userId}`, {
@@ -142,6 +161,7 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
         fund: '',
         moph_location: '',
         responsibility_center: '',
+        batch_id: '',
       })
       
       toast.success("Transaction created successfully!")
@@ -417,6 +437,27 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
             onChange={handleChange}
             placeholder="Enter responsibility center"
           />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="batch_id">Assign to Batch (Optional)</Label>
+          <Select
+            value={formData.batch_id}
+            onValueChange={(val) => setFormData(prev => ({ ...prev, batch_id: val === 'none' ? '' : val }))}
+          >
+            <SelectTrigger id="batch_id" className="w-full bg-background">
+              <SelectValue placeholder="-- Select an existing Batch --" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="top" className="max-h-[140px] overflow-y-auto">
+              <SelectItem value="none" className="text-gray-500 italic">-- No Batch --</SelectItem>
+              {batches.map(batch => (
+                <SelectItem key={batch.id} value={batch.id}>{batch.batchName}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-gray-500 italic px-1">
+            Assigning to a batch will skip the dashboard and move the transaction directly to the selected batch.
+          </p>
         </div>
       </div>
 

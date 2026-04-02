@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, RotateCcw, Check, X } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Check, X, Printer } from 'lucide-react'
 
 type Transaction = {
   id: string
@@ -39,12 +39,14 @@ interface BatchDetailsProps {
   batch: Batch
   onBack: () => void
   onRestoreSuccess: () => void
+  onPrint: (batch: Batch, transactions: Transaction[]) => void
 }
 
 export default function BatchDetails({
   batch,
   onBack,
   onRestoreSuccess,
+  onPrint,
 }: BatchDetailsProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -181,6 +183,13 @@ export default function BatchDetails({
             <p className="text-sm text-gray-600 font-mono">{batch.id}</p>
           </div>
         </div>
+        <Button
+          onClick={() => onPrint(batch, transactions)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+        >
+          <Printer className="w-4 h-4 mr-2" />
+          Print Report
+        </Button>
       </div>
 
       {/* Batch Info */}

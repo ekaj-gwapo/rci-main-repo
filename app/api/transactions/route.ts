@@ -140,6 +140,44 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
+    // If batchId is provided, move the transaction to batch_transactions
+    if (body.batchId) {
+      // 1. Insert into batch_transactions
+      const { error: batchTxError } = await supabase
+        .from('batch_transactions')
+        .insert([
+          {
+            batchid: body.batchId,
+            transactiondata: mapTransaction(transaction),
+          }
+        ])
+
+      if (batchTxError) throw batchTxError
+
+      // 2. Update transaction_batches metadata
+      const { data: batch, error: batchFetchError } = await supabase
+        .from('transaction_batches')
+        .select('transactioncount, totalamount')
+        .eq('id', body.batchId)
+        .single()
+      
+      if (!batchFetchError && batch) {
+        await supabase
+          .from('transaction_batches')
+          .update({
+            transactioncount: (batch.transactioncount || 0) + 1,
+            totalamount: (batch.totalamount || 0) + parseFloat(body.amount)
+          })
+          .eq('id', body.batchId)
+      }
+
+      // 3. Delete from transactions
+      await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', transaction.id)
+    }
+
     return NextResponse.json(mapTransaction(transaction), { status: 201 })
   } catch (error) {
     console.error('Error creating transaction:', error)

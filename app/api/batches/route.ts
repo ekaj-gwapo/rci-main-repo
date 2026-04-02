@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: batches, error } = await supabase
+    let query = supabase
       .from('transaction_batches')
       .select(`
         *,
@@ -33,7 +33,17 @@ export async function GET(request: NextRequest) {
           transactiondata
         )
       `)
-      .eq('viewerid', viewerId)
+
+    if (viewerId) {
+      query = query.eq('viewerid', viewerId)
+    }
+
+    const entryUserId = request.nextUrl.searchParams.get('entryUserId')
+    if (entryUserId) {
+      query = query.eq('entryuserid', entryUserId)
+    }
+
+    const { data: batches, error } = await query
       .order('createdat', { ascending: false })
 
     if (error) throw error
@@ -112,7 +122,13 @@ export async function POST(request: NextRequest) {
     if (countError) throw countError
 
     const sequentialNumber = String((count || 0) + 1).padStart(2, '0')
-    const batchName = `Batch ${sequentialNumber}`
+    
+    // Sort transactions to picking the "first" payee consistently (alphabetical)
+    const sortedForName = [...transactions].sort((a: any, b: any) => 
+      (a.payee || '').localeCompare(b.payee || '')
+    )
+    const firstPayee = sortedForName[0]?.payee || 'Unknown'
+    const batchName = `Batch ${sequentialNumber} – ${firstPayee}`
 
     // Create batch record
     const { data: batch, error: batchError } = await supabase
