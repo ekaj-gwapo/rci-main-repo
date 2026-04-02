@@ -404,12 +404,14 @@ export default function EntryDashboard() {
                     Add Transaction
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>New Transaction</DialogTitle>
-                    <DialogDescription>Enter transaction details below. All fields marked with * are required.</DialogDescription>
-                  </DialogHeader>
-                  <div className="mt-4">
+                <DialogContent className="sm:max-w-3xl overflow-hidden p-0 flex flex-col max-h-[90vh]">
+                  <div className="p-6 pb-0">
+                    <DialogHeader>
+                      <DialogTitle>New Transaction</DialogTitle>
+                      <DialogDescription>Enter transaction details below. All fields marked with * are required.</DialogDescription>
+                    </DialogHeader>
+                  </div>
+                  <div className="px-6 pb-6 mt-4 overflow-y-auto max-h-full">
                     <TransactionForm
                       userId={user?.id}
                       existingBankNames={bankNames}

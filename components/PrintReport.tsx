@@ -57,12 +57,13 @@ return (
 
 <div className="flex flex-col items-center mb-6 relative">
   <div className="flex items-center justify-center gap-4 w-full">
-    <img src="/logos/logo3.jpg" alt="Logo" className="w-16 h-16 object-contain" />
-    <div className="text-center leading-tight">
+    <img src="/logos/logo3.jpg" alt="Logo Left" className="w-16 h-16 object-contain" />
+    <div className="text-center leading-tight px-4">
       <p>Republic of the Philippines</p>
       <p className="font-bold uppercase">PROVINCIAL GOVERNMENT OF MISAMIS ORIENTAL</p>
       <p className="font-bold uppercase">OFFICE OF THE PROVINCIAL TREASURER</p>
     </div>
+    <img src="/logos/logo1.jpg" alt="Logo Right" className="w-16 h-16 object-contain" />
   </div>
 
   <div className="text-center mt-6">
@@ -176,9 +177,9 @@ transactions.map((t, idx) => (
 
 </td>
 
-<td className="border border-black p-1 text-right">
+<td className="border border-black p-1 text-right whitespace-nowrap">
 
-{idx === 0 ? '₱ ' : ''}{t.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+{idx === 0 ? '₱' : ''}{t.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 
 </td>
 
@@ -218,9 +219,9 @@ TOTAL
 
 </td>
 
-<td className="border border-black p-1 text-right font-bold">
+<td className="border border-black p-1 text-right font-bold whitespace-nowrap">
 
-₱ {totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+₱{totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 
 </td>
 

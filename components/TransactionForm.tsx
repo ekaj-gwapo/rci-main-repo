@@ -13,8 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { DatePicker } from '@/components/DatePicker'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, X } from 'lucide-react'
 import { toast } from "sonner"
 
 type TransactionFormProps = {
@@ -28,11 +38,14 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
   const [error, setError] = useState<string | null>(null)
   const [isCustomBank, setIsCustomBank] = useState(false)
   const [batches, setBatches] = useState<any[]>([])
+  const [showBatchWarning, setShowBatchWarning] = useState(false)
+  const [batchWarningMismatches, setBatchWarningMismatches] = useState<string[]>([])
+  const [pendingPayload, setPendingPayload] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     bank_name: '',
     payee: '',
     address: '',
-    dv_number: '',
+    dv_number: 'DV-',
     particulars: '',
     amount: '',
     date: '',
@@ -133,6 +146,63 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
         batchId: formData.batch_id || undefined,
       })
 
+      let mismatches: string[] = []
+
+      if (formData.batch_id) {
+        const selectedBatch = batches.find(b => b.id === formData.batch_id)
+        if (selectedBatch) {
+          const { computedBanks, computedFunds, computedDate } = selectedBatch
+          
+          if (computedBanks && computedBanks.length > 0 && !computedBanks.includes(formData.bank_name)) {
+            const batchBanks = computedBanks.join(', ') || 'None'
+            mismatches.push(`Bank Name (Batch uses ${batchBanks}, but transaction uses ${formData.bank_name || 'None'})`)
+          }
+          
+          const currentFundOrMoph = formData.moph_location 
+            ? `MOPH - ${formData.moph_location}` 
+            : (formData.fund || 'General Fund')
+            
+          if (computedFunds && computedFunds.length > 0 && !computedFunds.includes(currentFundOrMoph)) {
+            const batchFunds = computedFunds.join(', ') || 'None'
+            const isOffice = !!formData.moph_location || batchFunds.includes('MOPH')
+            const category = isOffice ? 'MOPH Location' : 'Fund'
+            
+            const cleanBatchFunds = computedFunds.map((f: string) => f.replace('MOPH - ', '')).join(', ')
+            const cleanCurrent = currentFundOrMoph.replace('MOPH - ', '')
+            
+            mismatches.push(`${category} (Batch uses ${cleanBatchFunds}, but transaction uses ${cleanCurrent})`)
+          }
+
+          if (computedDate && formData.date) {
+            const bDate = new Date(computedDate)
+            const fDate = new Date(formData.date)
+            if (bDate.getMonth() !== fDate.getMonth() || bDate.getFullYear() !== fDate.getFullYear()) {
+              const formattedBDate = bDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+              const formattedFDate = fDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+              mismatches.push(`Date (Batch uses ${formattedBDate}, but transaction uses ${formattedFDate})`)
+            }
+          }
+        }
+      }
+
+      if (mismatches.length > 0) {
+        setBatchWarningMismatches(mismatches)
+        setPendingPayload(payload)
+        setShowBatchWarning(true)
+        setIsLoading(false)
+        return
+      }
+
+      await executeSubmission(payload)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      setIsLoading(false)
+    }
+  }
+
+  const executeSubmission = async (payload: string) => {
+    try {
+      setIsLoading(true)
       const response = await fetch(`/api/transactions?userId=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,7 +218,7 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
         bank_name: '',
         payee: '',
         address: '',
-        dv_number: '',
+        dv_number: 'DV-',
         particulars: '',
         amount: '',
         date: '',
@@ -163,13 +233,26 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
         responsibility_center: '',
         batch_id: '',
       })
-      
+
       toast.success("Transaction created successfully!")
       onSuccess?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsLoading(false)
+      setShowBatchWarning(false)
+      setPendingPayload(null)
+    }
+  }
+
+  const handleBatchWarningAction = async (action: 'continue' | 'new_batch') => {
+    if (!pendingPayload) return
+    if (action === 'continue') {
+      await executeSubmission(pendingPayload)
+    } else {
+      const payloadObj = JSON.parse(pendingPayload)
+      payloadObj.batchId = 'CREATE_NEW_BATCH'
+      await executeSubmission(JSON.stringify(payloadObj))
     }
   }
 
@@ -446,7 +529,7 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
             onValueChange={(val) => setFormData(prev => ({ ...prev, batch_id: val === 'none' ? '' : val }))}
           >
             <SelectTrigger id="batch_id" className="w-full bg-background">
-              <SelectValue placeholder="-- Select an existing Batch --" />
+              <SelectValue placeholder="-- Existing Batches --" />
             </SelectTrigger>
             <SelectContent position="popper" side="top" className="max-h-[140px] overflow-y-auto">
               <SelectItem value="none" className="text-gray-500 italic">-- No Batch --</SelectItem>
@@ -470,6 +553,49 @@ export default function TransactionForm({ userId, existingBankNames = [], onSucc
           {isLoading ? 'Submitting...' : 'Submit Transaction'}
         </Button>
       </div>
+
+      <AlertDialog open={showBatchWarning} onOpenChange={setShowBatchWarning}>
+        <AlertDialogContent>
+          <button
+            type="button"
+            onClick={() => {
+              setShowBatchWarning(false)
+              setPendingPayload(null)
+            }}
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </button>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Batch Validation Warning</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 whitespace-pre-line">
+              The selected batch contains transactions with mismatched values:
+              <br /><br />
+              <span className="block pl-4 font-medium text-slate-800 space-y-1 mb-4 text-left">
+                {batchWarningMismatches.map((mismatch, idx) => (
+                  <span key={idx} className="block">• {mismatch}</span>
+                ))}
+              </span>
+              Adding this transaction may cause inconsistencies in the printed report. Do you want to:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+            <AlertDialogAction
+              onClick={() => handleBatchWarningAction('new_batch')}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
+            >
+              create a new batch
+            </AlertDialogAction>
+            <AlertDialogCancel
+              onClick={() => handleBatchWarningAction('continue')}
+              className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:text-red-700 mt-0 w-full sm:w-auto"
+            >
+              continue anyway
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   )
 }

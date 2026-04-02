@@ -142,12 +142,63 @@ export async function POST(request: NextRequest) {
 
     // If batchId is provided, move the transaction to batch_transactions
     if (body.batchId) {
+      let finalBatchId = body.batchId;
+
+      if (body.batchId === 'CREATE_NEW_BATCH') {
+        const { data: assignment } = await supabase
+          .from('viewer_access')
+          .select('viewerid')
+          .eq('entryuserid', userId)
+          .maybeSingle();
+
+        const resolvedViewerId = assignment?.viewerid || null;
+
+        let countQuery = supabase
+          .from('transaction_batches')
+          .select('*', { count: 'exact', head: true })
+          
+        if (resolvedViewerId) {
+           countQuery = countQuery.eq('viewerid', resolvedViewerId)
+        } else {
+           countQuery = countQuery.eq('entryuserid', userId)
+        }
+        
+        const { count, error: countError } = await countQuery;
+        if (countError) throw countError;
+
+        const sequentialNumber = String((count || 0) + 1).padStart(2, '0');
+        const firstPayee = body.payee.trim() || 'Unknown';
+        const batchName = `Batch ${sequentialNumber} – ${firstPayee}`;
+
+        const fundFilter = body.fund ? body.fund.trim() : (body.moph ? `MOPH - ${body.moph.trim()}` : 'General Fund');
+
+        const { data: batch, error: batchError } = await supabase
+          .from('transaction_batches')
+          .insert([{
+             viewerid: resolvedViewerId,
+             entryuserid: userId,
+             batchname: batchName,
+             transactioncount: 0,
+             totalamount: 0,
+             appliedfilters: {
+                bankNames: [body.bankName.trim()],
+                funds: [fundFilter],
+                date: body.date,
+             }
+          }])
+          .select('*')
+          .single();
+          
+        if (batchError) throw batchError;
+        finalBatchId = batch.id;
+      }
+
       // 1. Insert into batch_transactions
       const { error: batchTxError } = await supabase
         .from('batch_transactions')
         .insert([
           {
-            batchid: body.batchId,
+            batchid: finalBatchId,
             transactiondata: mapTransaction(transaction),
           }
         ])
@@ -155,20 +206,20 @@ export async function POST(request: NextRequest) {
       if (batchTxError) throw batchTxError
 
       // 2. Update transaction_batches metadata
-      const { data: batch, error: batchFetchError } = await supabase
+      const { data: batchData, error: batchFetchError } = await supabase
         .from('transaction_batches')
         .select('transactioncount, totalamount')
-        .eq('id', body.batchId)
+        .eq('id', finalBatchId)
         .single()
       
-      if (!batchFetchError && batch) {
+      if (!batchFetchError && batchData) {
         await supabase
           .from('transaction_batches')
           .update({
-            transactioncount: (batch.transactioncount || 0) + 1,
-            totalamount: (batch.totalamount || 0) + parseFloat(body.amount)
+            transactioncount: (batchData.transactioncount || 0) + 1,
+            totalamount: (batchData.totalamount || 0) + parseFloat(body.amount)
           })
-          .eq('id', body.batchId)
+          .eq('id', finalBatchId)
       }
 
       // 3. Delete from transactions
