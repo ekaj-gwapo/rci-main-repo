@@ -27,12 +27,13 @@ type Batch = {
 }
 
 interface BatchListProps {
-  viewerId: string
+  viewerId?: string
+  entryUserId?: string
   onSelectBatch: (batch: Batch) => void
   onPrintBatch: (batch: Batch) => void
 }
 
-export default function BatchList({ viewerId, onSelectBatch, onPrintBatch }: BatchListProps) {
+export default function BatchList({ viewerId, entryUserId, onSelectBatch, onPrintBatch }: BatchListProps) {
   const [batches, setBatches] = useState<Batch[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +49,8 @@ export default function BatchList({ viewerId, onSelectBatch, onPrintBatch }: Bat
     const fetchBatches = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/batches?viewerId=${viewerId}`)
+        const queryParam = viewerId ? `viewerId=${viewerId}` : `entryUserId=${entryUserId}`
+        const response = await fetch(`/api/batches?${queryParam}`)
         if (!response.ok) throw new Error('Failed to fetch batches')
         const data = await response.json()
         
@@ -137,7 +139,7 @@ export default function BatchList({ viewerId, onSelectBatch, onPrintBatch }: Bat
     }
 
     fetchBatches()
-  }, [viewerId])
+  }, [viewerId, entryUserId])
 
   const formatCurrency = (amount: number) => {
     const formatted = amount.toLocaleString('en-US', {
@@ -282,7 +284,7 @@ export default function BatchList({ viewerId, onSelectBatch, onPrintBatch }: Bat
               }}
               variant="ghost"
               size="sm"
-              className="text-emerald-600 hover:bg-emerald-50"
+              className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
             >
               <X className="w-4 h-4 mr-1" />
               Clear

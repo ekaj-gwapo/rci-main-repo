@@ -13,14 +13,15 @@ const mapBatch = (b: any) => ({
   createdAt: b.createdat
 })
 
-// GET all batches for a viewer
+// GET all batches for a viewer or entry user
 export async function GET(request: NextRequest) {
   try {
     const viewerId = request.nextUrl.searchParams.get('viewerId')
+    const entryUserId = request.nextUrl.searchParams.get('entryUserId')
 
-    if (!viewerId) {
+    if (!viewerId && !entryUserId) {
       return NextResponse.json(
-        { error: 'Viewer ID required' },
+        { error: 'Viewer ID or Entry User ID required' },
         { status: 400 }
       )
     }
@@ -38,7 +39,6 @@ export async function GET(request: NextRequest) {
       query = query.eq('viewerid', viewerId)
     }
 
-    const entryUserId = request.nextUrl.searchParams.get('entryUserId')
     if (entryUserId) {
       query = query.eq('entryuserid', entryUserId)
     }
@@ -104,20 +104,39 @@ export async function POST(request: NextRequest) {
       appliedFilters,
     } = body
 
-    if (!viewerId || !entryUserId || !transactions || transactions.length === 0) {
+    if (!entryUserId || !transactions || transactions.length === 0) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
+    let resolvedViewerId = viewerId;
+    if (!resolvedViewerId) {
+      const { data: assignment } = await supabase
+        .from('viewer_access')
+        .select('viewerid')
+        .eq('entryuserid', entryUserId)
+        .maybeSingle();
+      if (assignment) {
+        resolvedViewerId = assignment.viewerid;
+      }
+    }
+
     const totalAmount = transactions.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
     
-    // Get the count of batches for this viewer to generate sequential number
-    const { count, error: countError } = await supabase
+    // Get the count of batches for this viewer/entry to generate sequential number
+    let countQuery = supabase
       .from('transaction_batches')
       .select('*', { count: 'exact', head: true })
-      .eq('viewerid', viewerId)
+
+    if (resolvedViewerId) {
+      countQuery = countQuery.eq('viewerid', resolvedViewerId)
+    } else {
+      countQuery = countQuery.eq('entryuserid', entryUserId)
+    }
+
+    const { count, error: countError } = await countQuery
 
     if (countError) throw countError
 
@@ -135,7 +154,7 @@ export async function POST(request: NextRequest) {
       .from('transaction_batches')
       .insert([
         {
-          viewerid: viewerId,
+          viewerid: resolvedViewerId || null,
           entryuserid: entryUserId,
           batchname: batchName,
           transactioncount: transactions.length,
