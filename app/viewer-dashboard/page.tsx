@@ -245,7 +245,7 @@ export default function ViewerDashboard() {
           debit: parseAmount(row['debit']),
           credit: parseAmount(row['credit']),
           remarks: getString(row['remarks']),
-          fund: getString(row['fund'] || 'General Fund'),
+          fund: getString(row['fund']),
           responsibilityCenter: getString(row['responsibility center'] || row['resp. center'] || row['resp center']),
           moph: getString(row['moph'] || row['location'] || row['place'])
         }
@@ -625,17 +625,18 @@ export default function ViewerDashboard() {
             </div>
           </div>
           {(selectedBankName || selectedDate || selectedFund || selectedPlace) && (
-            <button
+            <Button
               onClick={() => {
                 setSelectedBankName('')
                 setSelectedDate('')
                 setSelectedFund('')
                 setSelectedPlace('')
               }}
-              className="mt-4 text-emerald-600 text-sm hover:underline"
+              variant="outline"
+              className="mt-4 text-emerald-600 border-emerald-300 hover:bg-emerald-50"
             >
               Clear Filters
-            </button>
+            </Button>
           )}
         </div>
 
